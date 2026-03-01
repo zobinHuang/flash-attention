@@ -87,25 +87,64 @@
     }                                        \
   }()
 
+#ifndef FLASHATTENTION_DISABLE_HDIM32
+// branch for headdim 32
+#define HDIM_BRANCH_32(HEADDIM, ...) else if (HEADDIM <= 32) { constexpr static int kHeadDim = 32; return __VA_ARGS__(); }
+#else
+// disabled headdim 32
+#define HDIM_BRANCH_32(HEADDIM, ...)
+#endif
+
+#ifndef FLASHATTENTION_DISABLE_HDIM64
+// branch for headdim 64
+#define HDIM_BRANCH_64(HEADDIM, ...) else if (HEADDIM <= 64) { constexpr static int kHeadDim = 64; return __VA_ARGS__(); }
+#else
+// disabled headdim 64
+#define HDIM_BRANCH_64(HEADDIM, ...)
+#endif
+
+#ifndef FLASHATTENTION_DISABLE_HDIM96
+// branch for headdim 96
+#define HDIM_BRANCH_96(HEADDIM, ...) else if (HEADDIM <= 96) { constexpr static int kHeadDim = 96; return __VA_ARGS__(); }
+#else
+// disabled headdim 96
+#define HDIM_BRANCH_96(HEADDIM, ...)
+#endif
+
+#ifndef FLASHATTENTION_DISABLE_HDIM128
+// branch for headdim 128
+#define HDIM_BRANCH_128(HEADDIM, ...) else if (HEADDIM <= 128) { constexpr static int kHeadDim = 128; return __VA_ARGS__(); }
+#else
+// disabled headdim 128
+#define HDIM_BRANCH_128(HEADDIM, ...)
+#endif
+
+#ifndef FLASHATTENTION_DISABLE_HDIM192
+// branch for headdim 192
+#define HDIM_BRANCH_192(HEADDIM, ...) else if (HEADDIM <= 192) { constexpr static int kHeadDim = 192; return __VA_ARGS__(); }
+#else
+// disabled headdim 192
+#define HDIM_BRANCH_192(HEADDIM, ...)
+#endif
+
+#ifndef FLASHATTENTION_DISABLE_HDIM256
+// branch for headdim 256
+#define HDIM_BRANCH_256(HEADDIM, ...) else if (HEADDIM <= 256) { constexpr static int kHeadDim = 256; return __VA_ARGS__(); }
+#else
+// disabled headdim 256
+#define HDIM_BRANCH_256(HEADDIM, ...)
+#endif
+
 #define HEADDIM_SWITCH(HEADDIM, ...)   \
-  [&] {                                    \
-    if (HEADDIM <= 32) {                   \
-      constexpr static int kHeadDim = 32;  \
-      return __VA_ARGS__();                \
-    } else if (HEADDIM <= 64) {            \
-      constexpr static int kHeadDim = 64;  \
-      return __VA_ARGS__();                \
-    } else if (HEADDIM <= 96) {            \
-      constexpr static int kHeadDim = 96;  \
-      return __VA_ARGS__();                \
-    } else if (HEADDIM <= 128) {           \
-      constexpr static int kHeadDim = 128; \
-      return __VA_ARGS__();                \
-    } else if (HEADDIM <= 192) {           \
-      constexpr static int kHeadDim = 192; \
-      return __VA_ARGS__();                \
-    } else if (HEADDIM <= 256) {           \
-      constexpr static int kHeadDim = 256; \
-      return __VA_ARGS__();                \
+[&] {                                    \
+    if (false) {}                          \
+    HDIM_BRANCH_32(HEADDIM, __VA_ARGS__)   \
+    HDIM_BRANCH_64(HEADDIM, __VA_ARGS__)   \
+    HDIM_BRANCH_96(HEADDIM, __VA_ARGS__)   \
+    HDIM_BRANCH_128(HEADDIM, __VA_ARGS__)  \
+    HDIM_BRANCH_192(HEADDIM, __VA_ARGS__)  \
+    HDIM_BRANCH_256(HEADDIM, __VA_ARGS__)  \
+    else {                                 \
+    TORCH_CHECK(false, "unsupported headdim. it might have been disabled during compilation."); \
     }                                      \
-  }()
+}()

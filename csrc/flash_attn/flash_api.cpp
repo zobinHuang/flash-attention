@@ -755,13 +755,16 @@ mha_varlen_fwd(at::Tensor &q,  // total_q x num_heads x head_size, total_q := \s
 }
 
 void run_mha_bwd(Flash_bwd_params &params, cudaStream_t stream) {
-    FP16_SWITCH(!params.is_bf16, [&] {
-        HEADDIM_SWITCH(params.d, [&] {
-            BOOL_SWITCH(params.is_causal, Is_causal, [&] {
-                run_mha_bwd_<elem_type, kHeadDim, Is_causal>(params, stream);
+    #ifndef FLASHATTENTION_DISABLE_BACKWARD
+        FP16_SWITCH(!params.is_bf16, [&] {
+            HEADDIM_SWITCH(params.d, [&] {
+                BOOL_SWITCH(params.is_causal, Is_causal, [&] {
+                    run_mha_bwd_<elem_type, kHeadDim, Is_causal>(params, stream);
+                });
             });
         });
-    });
+    #else
+    #endif
 }
 
 std::vector<at::Tensor>
@@ -1479,7 +1482,9 @@ PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
     m.doc() = "FlashAttention";
     m.def("fwd", &FLASH_NAMESPACE::mha_fwd, "Forward pass");
     m.def("varlen_fwd", &FLASH_NAMESPACE::mha_varlen_fwd, "Forward pass (variable length)");
-    m.def("bwd", &FLASH_NAMESPACE::mha_bwd, "Backward pass");
-    m.def("varlen_bwd", &FLASH_NAMESPACE::mha_varlen_bwd, "Backward pass (variable length)");
     m.def("fwd_kvcache", &FLASH_NAMESPACE::mha_fwd_kvcache, "Forward pass, with KV-cache");
+    #ifndef FLASHATTENTION_DISABLE_BACKWARD
+        m.def("bwd", &FLASH_NAMESPACE::mha_bwd, "Backward pass");
+        m.def("varlen_bwd", &FLASH_NAMESPACE::mha_varlen_bwd, "Backward pass (variable length)");
+    #endif
 }
